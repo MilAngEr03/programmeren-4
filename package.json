@@ -1,0 +1,43 @@
+{
+  "name": "programmeren4-milan-bollebakker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MilAngEr03/programmeren4.git"
+  },
+  "keywords": [
+    "nodejs",
+    "server",
+    "javascript"
+  ],
+  "author": "Mathijs van Engelen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MilAngEr03/programmeren4/issues"
+  },
+  "homepage": "https://github.com/MilAngEr03/programmeren4#readme",
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": true,
+    "singleQuote": true
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "chai": "^5.1.0",
+    "express": "^4.19.2",
+    "joi": "^17.13.1",
+    "logger": "^0.0.1",
+    "tracer": "^1.3.0"
+  }
+}
