@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MilAngEr03/programmeren4.git"
+    "url": "git+https://github.com/MilAngEr03/programmeren-4.git"
   },
   "keywords": [
     "nodejs",
@@ -20,9 +20,9 @@
   "author": "Mathijs van Engelen",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/MilAngEr03/programmeren4/issues"
+    "url": "https://github.com/MilAngEr03/programmeren-44/issues"
   },
-  "homepage": "https://github.com/MilAngEr03/programmeren4#readme",
+  "homepage": "https://github.com/MilAngEr03/programmeren-44#readme",
   "prettier": {
     "trailingComma": "es5",
     "tabWidth": 2,
