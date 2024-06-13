@@ -3,7 +3,6 @@
 //
 require('dotenv').config()
 
-dotenv.config();
 // Set the logging level.
 const loglevel = process.env.LOGLEVEL
 
