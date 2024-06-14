@@ -83,8 +83,36 @@ let userController = {
                 })
             }
         })
-    }
+    },
 
+    update: (req, res) => {
+        const userId = req.params.userId;
+        const user = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                status: 400,
+                message: 'userId parameter is required',
+                data: {}
+            });
+        }
+
+        userService.update(userId, user, (err, result) => {
+            if (err) {
+                res.status(500).json({
+                    status: 500,
+                    message: err.message,
+                    data: {}
+                });
+            } else {
+                res.status(200).json({
+                    status: 200,
+                    message: result.message,
+                    data: result.data
+                });
+            }
+        });
+    }
     // Todo: Implement the update and delete methods
 }
 
