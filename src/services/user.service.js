@@ -85,6 +85,62 @@ const userService = {
         });
     },
 
+    getAllActive: (isActive, callback) => {
+        logger.info(`getAllActive where isActive = ${isActive}`);
+        database.getConnection((err, connection) => {
+            if (err) {
+                logger.error(err);
+                callback(err, null);
+                return;
+            }
+            connection.query('SELECT id, firstName, lastName FROM `user` WHERE isActive = ?', [isActive], (error, results) => {
+                connection.release();
+                if (error) {
+                    logger.error(error);
+                    callback(error, null);
+                } else {
+                    logger.debug(results);
+                    callback(null, {
+                        message: `Found ${results.length} users.`,
+                        data: results
+                    });
+                }
+            });
+        });
+    },
+    
+    getByCriteria: (criteria, callback) => {
+        logger.info('getByCriteria', criteria);
+        database.getConnection((err, connection) => {
+            if (err) {
+                logger.error(err);
+                callback(err, null);
+                return;
+            }
+    
+            let query = 'SELECT id, firstName, lastName FROM `user` WHERE 1=1';
+            const values = [];
+            Object.keys(criteria).forEach(key => {
+                query += ` AND ${key} = ?`;
+                values.push(criteria[key]);
+            });
+    
+            connection.query(query, values, (error, results) => {
+                connection.release();
+                if (error) {
+                    logger.error(error);
+                    callback(error, null);
+                } else {
+                    logger.debug(results);
+                    callback(null, {
+                        message: `Found ${results.length} users.`,
+                        data: results
+                    });
+                }
+            });
+        });
+    },    
+
     getProfile: (userId, callback) => {
         logger.info('getProfile userId:', userId);
         database.getConnection((err, connection) => {

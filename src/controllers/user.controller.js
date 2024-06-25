@@ -25,47 +25,65 @@ let userController = {
     },
 
     getAll: (req, res, next) => {
-        if (req.params.isActive) {
-            const isActive = req.params.isActive
-            logger.trace(`getAll users where isActive = ${isActive}`)
-            userService.getAllActive((error, success) => {
+        const isActive = req.body.isActive;
+        const criteria = req.body.criteria || {};
+    
+        if (isActive !== undefined) {
+            logger.trace(`getAll users where isActive = ${isActive}`);
+            userService.getAllActive(isActive, (error, success) => {
                 if (error) {
                     return next({
                         status: error.status,
                         message: error.message,
                         data: {}
-                    })
+                    });
                 }
                 if (success) {
                     res.status(200).json({
                         status: 200,
                         message: success.message,
                         data: success.data
-                    })
+                    });
                 }
-            })
-            return
-        }
-        else {
-            logger.trace('getAll')
+            });
+        } else if (Object.keys(criteria).length > 0) {
+            logger.trace('getAll users with criteria', criteria);
+            userService.getByCriteria(criteria, (error, success) => {
+                if (error) {
+                    return next({
+                        status: error.status,
+                        message: error.message,
+                        data: {}
+                    });
+                }
+                if (success) {
+                    res.status(200).json({
+                        status: 200,
+                        message: success.message,
+                        data: success.data
+                    });
+                }
+            });
+        } else {
+            logger.trace('getAll');
             userService.getAll((error, success) => {
                 if (error) {
                     return next({
                         status: error.status,
                         message: error.message,
                         data: {}
-                    })
+                    });
                 }
                 if (success) {
                     res.status(200).json({
                         status: 200,
                         message: success.message,
                         data: success.data
-                    })
+                    });
                 }
-            })
+            });
         }
-    },
+    },    
 
     getById: (req, res, next) => {
         const userId = req.params.userId
