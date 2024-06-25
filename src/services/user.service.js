@@ -2,6 +2,8 @@ const logger = require('../util/logger');
 const database = require('../dao/mysql-db');
 const { create, getActive } = require('../controllers/user.controller');
 
+const validFields = ['firstName', 'lastName', 'emailAdress', 'password', 'isActive', 'street', 'city', 'phoneNumber', 'roles'];
+
 const userService = {
     create: (user, callback) => {
         logger.info('create user', user.firstName, user.lastName);
@@ -117,14 +119,24 @@ const userService = {
                 callback(err, null);
                 return;
             }
-    
+
+            // Validate criteria fields
+            const invalidFields = Object.keys(criteria).filter(field => !validFields.includes(field));
+            if (invalidFields.length > 0) {
+                logger.warn('Invalid search criteria fields:', invalidFields);
+                return callback(null, {
+                    message: 'No users found due to invalid search criteria.',
+                    data: []
+                });
+            }
+
             let query = 'SELECT id, firstName, lastName FROM `user` WHERE 1=1';
             const values = [];
             Object.keys(criteria).forEach(key => {
                 query += ` AND ${key} = ?`;
                 values.push(criteria[key]);
             });
-    
+
             connection.query(query, values, (error, results) => {
                 connection.release();
                 if (error) {
@@ -139,7 +151,7 @@ const userService = {
                 }
             });
         });
-    },    
+    }, 
 
     getProfile: (userId, callback) => {
         logger.info('getProfile userId:', userId);

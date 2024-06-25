@@ -83,7 +83,7 @@ let userController = {
                 }
             });
         }
-    },    
+    },
 
     getById: (req, res, next) => {
         const userId = req.params.userId
