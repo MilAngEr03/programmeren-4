@@ -12,8 +12,11 @@ const userService = {
                 return;
             }
     
-            const query = 'INSERT INTO `user` (firstName, lastName, emailAdress, password, isActive, street, city, phoneNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?);';
-            // Ensure all fields are provided, or set default values
+            // Assuming user.roles is an array of strings, e.g., ['admin', 'user']
+            // Convert the array to a comma-separated string without spaces
+            const rolesString = user.roles.join(',');
+
+            const query = 'INSERT INTO `user` (firstName, lastName, emailAdress, password, isActive, street, city, phoneNumber, roles) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);';
             const values = [
                 user.firstName, 
                 user.lastName, 
@@ -22,7 +25,8 @@ const userService = {
                 user.isActive, 
                 user.street, 
                 user.city, 
-                user.phoneNumber, 
+                user.phoneNumber,
+                rolesString // Add rolesString to the values array
             ];
     
             connection.query(query, values, (error, results) => {
@@ -37,7 +41,8 @@ const userService = {
                         data: {
                             id: results.insertId,
                             firstName: user.firstName,
-                            lastName: user.lastName
+                            lastName: user.lastName,
+                            roles: user.roles // Optionally return the roles array as part of the response
                         }
                     });
                 }
