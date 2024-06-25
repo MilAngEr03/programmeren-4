@@ -22,5 +22,6 @@ router.put('/api/user/:userId', userController.update)
 
 // Tijdelijke routes om niet bestaande routes op te vangen
 router.delete('/api/user/:userId', notFound)
+router.all('*', notFound);
 
 module.exports = router
