@@ -1,10 +1,22 @@
 const logger = require('../util/logger');
 const database = require('../dao/mysql-db');
-const { create } = require('../controllers/user.controller');
+const { create, getActive } = require('../controllers/user.controller');
 
 const userService = {
     create: (user, callback) => {
         logger.info('create user', user.firstName, user.lastName);
+    
+        // Check if any of the required fields are null or empty
+        const requiredFields = ['firstName', 'lastName', 'emailAdress', 'password', 'isActive', 'street', 'city', 'phoneNumber', 'roles'];
+        const missingFields = requiredFields.filter(field => !user[field]);
+    
+        if (missingFields.length > 0) {
+            const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
+            logger.error(errorMessage);
+            callback(new Error(errorMessage), null);
+            return;
+        }
+    
         database.getConnection((err, connection) => {
             if (err) {
                 logger.error(err);
@@ -12,10 +24,8 @@ const userService = {
                 return;
             }
     
-            // Assuming user.roles is an array of strings, e.g., ['admin', 'user']
-            // Convert the array to a comma-separated string without spaces
             const rolesString = user.roles.join(',');
-
+    
             const query = 'INSERT INTO `user` (firstName, lastName, emailAdress, password, isActive, street, city, phoneNumber, roles) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);';
             const values = [
                 user.firstName, 
@@ -26,7 +36,7 @@ const userService = {
                 user.street, 
                 user.city, 
                 user.phoneNumber,
-                rolesString // Add rolesString to the values array
+                rolesString
             ];
     
             connection.query(query, values, (error, results) => {
@@ -42,7 +52,7 @@ const userService = {
                             id: results.insertId,
                             firstName: user.firstName,
                             lastName: user.lastName,
-                            roles: user.roles // Optionally return the roles array as part of the response
+                            roles: user.roles
                         }
                     });
                 }
