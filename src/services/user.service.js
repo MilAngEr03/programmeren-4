@@ -122,32 +122,36 @@ const userService = {
 
     update: (userId, user, callback) => {
         logger.info('update user', userId, user);
-
+    
         if (!userId) {
             const error = new Error('Invalid userId');
             logger.error(error.message);
             callback(error, null);
             return;
         }
-
+    
         database.getConnection((err, connection) => {
             if (err) {
                 logger.error(err);
                 callback(err, null);
                 return;
             }
-
+    
+            // Assuming user.roles is an array of strings, e.g., ['admin', 'user']
+            // Convert the array to a comma-separated string without spaces
+            const rolesString = user.roles.join(',');
+    
             const query = 'UPDATE `user` SET firstName = ?, lastName = ?, emailAdress = ?, password = ?, isActive = ?, street = ?, city = ?, phoneNumber = ?, roles = ? WHERE id = ?';
-
+    
             const values = [
                 user.firstName, user.lastName, user.emailAdress, user.password, 
-                user.isActive, user.street, user.city, user.phoneNumber, user.roles, 
+                user.isActive, user.street, user.city, user.phoneNumber, rolesString, 
                 userId
             ];
-
+    
             connection.query(query, values, (error, results) => {
                 connection.release();
-
+    
                 if (error) {
                     logger.error(error);
                     callback(error, null);
