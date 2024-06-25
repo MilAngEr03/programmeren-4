@@ -3,7 +3,7 @@ const assert = require('assert')
 const router = express.Router()
 const userController = require('../controllers/user.controller')
 const logger = require('../util/logger')
-const validateToken = require('./authentication.routes')
+const { validateToken } = require('../routes/authentication.routes')
 
 // Tijdelijke functie om niet bestaande routes op te vangen
 const notFound = (req, res, next) => {

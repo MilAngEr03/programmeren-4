@@ -107,6 +107,7 @@ const authController = {
                             })
                         }
                         if (rows) {
+                            console.log("there is a row")
                             // 2. Er was een resultaat, check het password.
                             if (
                                 rows &&
