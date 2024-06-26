@@ -1,5 +1,6 @@
 const express = require('express');
 const userRoutes = require('./src/routes/user.routes');
+const mealRoutes = require('./src/routes/meal.routes');
 const { routes: authRoutes } = require('./src/routes/authentication.routes');
 const logger = require('./src/util/logger');
 
@@ -21,8 +22,10 @@ app.get('/api/info', (req, res) => {
 // Add logging for route registration
 console.log('Registering auth routes at /api/auth');
 app.use('/api/auth', authRoutes);
-console.log('Registering user routes at /');
-app.use('/', userRoutes);
+console.log('Registering user routes at /api/user');
+app.use('/api/user', userRoutes);
+console.log(`Registering meal routes at /api/meal`);
+app.use('/api/meal', mealRoutes);
 
 app.use((req, res, next) => {
     next({
