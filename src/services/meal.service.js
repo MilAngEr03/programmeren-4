@@ -55,6 +55,61 @@ let mealService = {
             })
         })
     },
+
+    update: (meal, mealId, userId, callback) => {
+        logger.info(`Updating meal ${mealId}.`);
+    
+        const requiredFields = ['isActive', 'isVega', 'isVegan', 'isToTakeHome', 'dateTime', 'maxAmountOfParticipants', 'price', 'imageUrl', 'name', 'description']; // Corrected 'maxAmountOfParticipants'
+        const missingFields = requiredFields.filter(field => meal[field] === undefined && field !== 'cookId'); // Explicitly check for undefined
+
+
+        if (missingFields.length > 0) {
+            const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
+            logger.error(errorMessage);
+            callback(new Error(errorMessage), null);
+            return;
+        }
+    
+        database.getConnection((err, connection) => {
+            if (err) {
+                logger.error(err);
+                callback(err, null);
+                return;
+            }
+    
+            const query = 'UPDATE `meal` SET isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = ?, maxAmountOfParticipants = ?, price = ?, imageURL = ?, cookId = ?, name = ?, description = ?, allergenes = ? WHERE id = ?;'
+            const values = [
+                meal.isActive,
+                meal.isVega,
+                meal.isVegan,
+                meal.isToTakeHome,
+                meal.dateTime,
+                meal.maxAmountOfParticipants,
+                meal.price,
+                meal.imageUrl,
+                meal.cookId,
+                meal.name,
+                meal.description,
+                meal.allergenes,
+                mealId
+            ];
+    
+            connection.query(query, values, (error, results) => {
+                connection.release();
+                if (error) {
+                    logger.error(error)
+                    callback(error, null)
+                } else {
+                    logger.debug(results)
+                    callback(null, {
+                        message: `Updated meal with id ${mealId}.`,
+                        data: { meal }
+                    })
+                }
+            })
+        })
+    }
+
 }
 
 module.exports = mealService;
