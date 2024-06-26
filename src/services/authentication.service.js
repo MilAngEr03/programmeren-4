@@ -6,156 +6,163 @@ const db = require('../dao/mysql-db')
 // const validateEmail = require('../util/emailvalidator')
 const logger = require('../util/logger')
 const jwtSecretKey = require('../util/config').secretkey
+const bcrypt = require('bcrypt')
 
 const authController = {
     login: (userCredentials, callback) => {
-        logger.debug('login')
+        logger.debug('login');
 
         db.getConnection((err, connection) => {
             if (err) {
-                logger.error(err)
-                callback(err.message, null)
+                logger.error(err);
+                callback(err.message, null);
             }
             if (connection) {
-                // 1. Kijk of deze useraccount bestaat.
+                // Check if the user account exists
                 connection.query(
                     'SELECT `id`, `emailAdress`, `password`, `firstName`, `lastName` FROM `user` WHERE `emailAdress` = ?',
                     [userCredentials.emailAdress],
                     (err, rows, fields) => {
-                        connection.release()
+                        connection.release();
                         if (err) {
-                            logger.error('Error: ', err.toString())
-                            callback(error.message, null)
+                            logger.error('Error: ', err.toString());
+                            callback(err.message, null);
                         }
-                        if (rows) {
-                            // 2. Er was een resultaat, check het password.
-                            if (
-                                rows &&
-                                rows.length === 1 &&
-                                rows[0].password == userCredentials.password
-                            ) {
-                                logger.debug(
-                                    'passwords DID match, sending userinfo and valid token'
-                                )
-                                // Extract the password from the userdata - we do not send that in the response.
-                                const { password, ...userinfo } = rows[0]
-                                // Create an object containing the data we want in the payload.
-                                const payload = {
-                                    userId: userinfo.id
+                        if (rows && rows.length === 1) {
+                            const user = rows[0];
+                            // Compare the provided password with the stored hashed password
+                            bcrypt.compare(userCredentials.password, user.password, (err, result) => {
+                                if (err) {
+                                    logger.error('Error: ', err.toString());
+                                    callback(err.message, null);
                                 }
+                                if (result) {
+                                    logger.debug('passwords DID match, sending userinfo and valid token');
+                                    const { password, ...userinfo } = user;
+                                    const payload = { userId: userinfo.id };
 
-                                jwt.sign(
-                                    payload,
-                                    jwtSecretKey,
-                                    { expiresIn: '12d' },
-                                    (err, token) => {
-                                        logger.info(
-                                            'User logged in, sending: ',
-                                            userinfo
-                                        )
-                                        callback(null, {
-                                            status: 200,
-                                            message: 'User logged in',
-                                            data: { ...userinfo, token }
-                                        })
-                                    }
-                                )
-                            } else {
-                                logger.debug(
-                                    'User not found or password invalid'
-                                )
-                                callback(
-                                    {
+                                    jwt.sign(
+                                        payload,
+                                        jwtSecretKey,
+                                        { expiresIn: '12d' },
+                                        (err, token) => {
+                                            if (err) {
+                                                logger.error('Error signing token: ', err.toString());
+                                                callback(err.message, null);
+                                            }
+                                            logger.info('User logged in, sending: ', userinfo);
+                                            callback(null, {
+                                                status: 200,
+                                                message: 'User logged in',
+                                                data: { ...userinfo, token }
+                                            });
+                                        }
+                                    );
+                                } else {
+                                    logger.debug('User not found or password invalid');
+                                    callback({
                                         status: 409,
-                                        message:
-                                            'User not found or password invalid',
+                                        message: 'User not found or password invalid',
                                         data: {}
-                                    },
-                                    null
-                                )
-                            }
+                                    }, null);
+                                }
+                            });
+                        } else {
+                            callback({
+                                status: 409,
+                                message: 'User not found or password invalid',
+                                data: {}
+                            }, null);
                         }
                     }
-                )
+                );
             }
-        })
+        });
     },
 
     login2: (req, res, next) => {
-        dbconnection.getConnection((err, connection) => {
+        db.getConnection((err, connection) => {
             if (err) {
-                logger.error('Error getting connection from dbconnection')
+                logger.error('Error getting connection from dbconnection');
                 return next({
-                    status: err.status,
-                    message: error.message,
+                    status: 500,
+                    message: err.message,
                     data: {}
-                })
+                });
             }
             if (connection) {
-                // 1. Kijk of deze useraccount bestaat.
+                // Check if the user account exists
                 connection.query(
                     'SELECT `id`, `emailAdress`, `password`, `firstName`, `lastName` FROM `user` WHERE `emailAdress` = ?',
                     [req.body.emailAdress],
                     (err, rows, fields) => {
-                        connection.release()
+                        connection.release();
                         if (err) {
-                            logger.error('Error: ', err.toString())
+                            logger.error('Error: ', err.toString());
                             return next({
-                                status: err.status,
-                                message: error.message,
+                                status: 500,
+                                message: err.message,
                                 data: {}
-                            })
+                            });
                         }
-                        if (rows) {
-                            console.log("there is a row")
-                            // 2. Er was een resultaat, check het password.
-                            if (
-                                rows &&
-                                rows.length === 1 &&
-                                rows[0].password == req.body.password
-                            ) {
-                                logger.info(
-                                    'passwords DID match, sending userinfo and valid token'
-                                )
-                                // Extract the password from the userdata - we do not send that in the response.
-                                const { password, ...userinfo } = rows[0]
-                                // Create an object containing the data we want in the payload.
-                                const payload = {
-                                    userId: userinfo.id
+                        if (rows && rows.length === 1) {
+                            const user = rows[0];
+                            // Compare the provided password with the stored hashed password
+                            bcrypt.compare(req.body.password, user.password, (err, result) => {
+                                if (err) {
+                                    logger.error('Error: ', err.toString());
+                                    return next({
+                                        status: 500,
+                                        message: err.message,
+                                        data: {}
+                                    });
                                 }
+                                if (result) {
+                                    logger.info('passwords DID match, sending userinfo and valid token');
+                                    const { password, ...userinfo } = user;
+                                    const payload = { userId: userinfo.id };
 
-                                jwt.sign(
-                                    payload,
-                                    jwtSecretKey,
-                                    { expiresIn: '12d' },
-                                    function (err, token) {
-                                        logger.debug(
-                                            'User logged in, sending: ',
-                                            userinfo
-                                        )
-                                        res.status(200).json({
-                                            statusCode: 200,
-                                            results: { ...userinfo, token }
-                                        })
-                                    }
-                                )
-                            } else {
-                                logger.info(
-                                    'User not found or password invalid'
-                                )
-                                return next({
-                                    status: 409,
-                                    message:
-                                        'User not found or password invalid',
-                                    data: {}
-                                })
-                            }
+                                    jwt.sign(
+                                        payload,
+                                        jwtSecretKey,
+                                        { expiresIn: '12d' },
+                                        (err, token) => {
+                                            if (err) {
+                                                logger.error('Error signing token: ', err.toString());
+                                                return next({
+                                                    status: 500,
+                                                    message: err.message,
+                                                    data: {}
+                                                });
+                                            }
+                                            logger.debug('User logged in, sending: ', userinfo);
+                                            res.status(200).json({
+                                                statusCode: 200,
+                                                results: { ...userinfo, token }
+                                            });
+                                        }
+                                    );
+                                } else {
+                                    logger.info('User not found or password invalid');
+                                    return next({
+                                        status: 409,
+                                        message: 'User not found or password invalid',
+                                        data: {}
+                                    });
+                                }
+                            });
+                        } else {
+                            return next({
+                                status: 409,
+                                message: 'User not found or password invalid',
+                                data: {}
+                            });
                         }
                     }
-                )
+                );
             }
-        })
+        });
     }
-}
+};
 
-module.exports = authController
+module.exports = authController;

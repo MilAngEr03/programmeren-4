@@ -1,6 +1,7 @@
 const logger = require('../util/logger');
 const database = require('../dao/mysql-db');
 const { create, getActive } = require('../controllers/user.controller');
+const bcrypt = require('bcrypt');
 
 const validFields = ['firstName', 'lastName', 'emailAdress', 'password', 'isActive', 'street', 'city', 'phoneNumber', 'roles'];
 
@@ -8,7 +9,6 @@ const userService = {
     create: (user, callback) => {
         logger.info('create user', user.firstName, user.lastName);
     
-        // Check if any of the required fields are null or empty
         const requiredFields = ['firstName', 'lastName', 'emailAdress', 'password', 'isActive', 'street', 'city', 'phoneNumber', 'roles'];
         const missingFields = requiredFields.filter(field => !user[field]);
     
@@ -19,48 +19,54 @@ const userService = {
             return;
         }
     
-        database.getConnection((err, connection) => {
+        bcrypt.hash(user.password, 10, (err, hashedPassword) => {
             if (err) {
-                logger.error(err);
+                logger.error('Error hashing password:', err);
                 callback(err, null);
                 return;
             }
+
+            user.password = hashedPassword;
     
-            const rolesString = user.roles.join(',');
-    
-            const query = 'INSERT INTO `user` (firstName, lastName, emailAdress, password, isActive, street, city, phoneNumber, roles) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);';
-            const values = [
-                user.firstName, 
-                user.lastName, 
-                user.emailAdress, 
-                user.password, 
-                user.isActive, 
-                user.street, 
-                user.city, 
-                user.phoneNumber,
-                rolesString
-            ];
-    
-            connection.query(query, values, (error, results) => {
-                connection.release();
-                if (error) {
-                    logger.error(error);
-                    callback(error, null);
-                } else {
-                    logger.debug(results);
-                    callback(null, {
-                        message: `Created user with id ${results.insertId}.`,
-                        data: {
-                            id: results.insertId,
-                            firstName: user.firstName,
-                            lastName: user.lastName,
-                            roles: user.roles
-                        }
-                    });
+            database.getConnection((err, connection) => {
+                if (err) {
+                    logger.error(err);
+                    callback(err, null);
+                    return;
                 }
+    
+                const rolesString = user.roles.join(',');
+    
+                const query = 'INSERT INTO `user` (firstName, lastName, emailAdress, password, isActive, street, city, phoneNumber, roles) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);';
+                const values = [
+                    user.firstName, 
+                    user.lastName, 
+                    user.emailAdress, 
+                    user.password, 
+                    user.isActive, 
+                    user.street, 
+                    user.city, 
+                    user.phoneNumber,
+                    rolesString
+                ];
+    
+                connection.query(query, values, (error, results) => {
+                    connection.release();
+                    if (error) {
+                        logger.error(error);
+                        callback(error, null);
+                    } else {
+                        logger.debug(results);
+                        callback(null, {
+                            message: `Created user with id ${results.insertId}.`,
+                            data: { user }
+                        });
+                    }
+                });
             });
         });
     },
+
 
     getAll: (callback) => {
         logger.info('getAll');
@@ -203,7 +209,8 @@ const userService = {
         });
     },
 
-    update: (userId, user, callback) => {
+    update: (userId, creatorId, user, callback) => {
+        userId = parseInt(userId);
         logger.info('update user', userId, user);
     
         if (!userId) {
@@ -212,42 +219,109 @@ const userService = {
             callback(error, null);
             return;
         }
-    
-        database.getConnection((err, connection) => {
-            if (err) {
-                logger.error(err);
-                callback(err, null);
-                return;
-            }
-    
-            // Assuming user.roles is an array of strings, e.g., ['admin', 'user']
-            // Convert the array to a comma-separated string without spaces
-            const rolesString = user.roles.join(',');
-    
-            const query = 'UPDATE `user` SET firstName = ?, lastName = ?, emailAdress = ?, password = ?, isActive = ?, street = ?, city = ?, phoneNumber = ?, roles = ? WHERE id = ?';
-    
-            const values = [
-                user.firstName, user.lastName, user.emailAdress, user.password, 
-                user.isActive, user.street, user.city, user.phoneNumber, rolesString, 
-                userId
-            ];
-    
-            connection.query(query, values, (error, results) => {
-                connection.release();
-    
-                if (error) {
-                    logger.error(error);
-                    callback(error, null);
-                } else {
-                    logger.debug(results);
-                    callback(null, {
-                        message: `Updated ${results.affectedRows} user.`,
-                        data: results
+
+        logger.debug('Comparing userId and creatorId', { userId, creatorId });
+
+        if (userId === creatorId) {
+            logger.debug('UserId matches CreatorId, proceeding with update');
+            const updateUser = () => {
+                database.getConnection((err, connection) => {
+                    if (err) {
+                        logger.error('Database connection error', err);
+                        callback(err, null);
+                        return;
+                    }
+            
+                    const rolesString = user.roles.join(',');
+
+                    logger.debug('Roles string:', rolesString);
+
+                    const query = 'UPDATE `user` SET firstName = ?, lastName = ?, emailAdress = ?, password = ?, isActive = ?, street = ?, city = ?, phoneNumber = ?, roles = ? WHERE id = ?';
+            
+                    const values = [
+                        user.firstName, user.lastName, user.emailAdress, user.password, 
+                        user.isActive, user.street, user.city, user.phoneNumber, rolesString, 
+                        userId
+                    ];
+
+                    logger.debug('Query:', query);
+                    logger.debug('Values:', values);
+
+                    connection.query(query, values, (error, results) => {
+                        connection.release();
+            
+                        if (error) {
+                            logger.error('Query execution error', error);
+                            callback(error, null);
+                        } else {
+                            logger.debug('Query results', results);
+                            callback(null, {
+                                message: `Updated ${results.affectedRows} user.`,
+                                data: { user }
+                            });
+                        }
                     });
+                });
+            };
+        
+            if (user.password) {
+                bcrypt.hash(user.password, 10, (err, hashedPassword) => {
+                    if (err) {
+                        logger.error('Error hashing password:', err);
+                        callback(err, null);
+                        return;
+                    }
+                    user.password = hashedPassword;
+                    updateUser();
+                });
+            } else {
+                updateUser();
+            }
+        } else {
+            const error = new Error('Unauthorized');
+            logger.error('Unauthorized: UserId does not match CreatorId', { userId, creatorId });
+            callback(error, null);
+        }
+    },
+
+    delete : (userId, creatorId, callback) => {
+        userId = parseInt(userId);
+
+        if (!userId) {
+            const error = new Error('Invalid userId');
+            logger.error(error.message);
+            callback(error, null);
+            return;
+        }
+        if (userId === creatorId) {
+            logger.info('delete user', userId);
+            database.getConnection((err, connection) => {
+                if (err) {
+                    logger.error(err);
+                    callback(err, null);
+                    return;
                 }
+
+                connection.query('DELETE FROM `user` WHERE id = ?', [userId], (error, results) => {
+                    connection.release();
+                    if (error) {
+                        logger.error(error);
+                        callback(error, null);
+                    } else {
+                        logger.debug(results);
+                        callback(null, {
+                            message: `Deleted ${results.affectedRows} user.`,
+                            data: { message: `Deleted user with userId ${userId}` }
+                        });
+                    }
+                });
             });
-        });
-    }
+        } else {
+            const error = new Error('Unauthorized');
+            logger.error('Unauthorized: UserId does not match CreatorId', { userId, creatorId });
+            callback(error, null);
+        }
+    },
 };
 
 module.exports = userService;
