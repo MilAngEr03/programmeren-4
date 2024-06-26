@@ -5,7 +5,7 @@ const userController = require('../controllers/user.controller')
 const logger = require('../util/logger')
 const { validateToken } = require('../routes/authentication.routes')
 
-// Tijdelijke functie om niet bestaande routes op te vangen
+// Functie om niet bestaande routes op te vangen
 const notFound = (req, res, next) => {
     next({
         status: 404,
@@ -15,12 +15,12 @@ const notFound = (req, res, next) => {
 }
 
 // Userroutes
-router.post('/api/user', userController.create)
-router.get('/api/user', validateToken, userController.getAll)
-router.get('/api/user/profile', validateToken, userController.getProfile)
-router.get('/api/user/:userId', validateToken, userController.getById)
-router.put('/api/user/:userId', validateToken, userController.update)
-router.delete('/api/user/:userId', validateToken, userController.delete)
+router.post('/', userController.create)
+router.get('/', validateToken, userController.getAll)
+router.get('/profile', validateToken, userController.getProfile)
+router.get('/:userId', validateToken, userController.getById)
+router.put('/:userId', validateToken, userController.update)
+router.delete('/:userId', validateToken, userController.delete)
 
 // Alle niet bestaande routes worden afgevangen
 router.all('*', notFound);

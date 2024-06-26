@@ -1,6 +1,5 @@
 const logger = require('../util/logger');
 const database = require('../dao/mysql-db');
-const { create, getActive } = require('../controllers/user.controller');
 const bcrypt = require('bcrypt');
 
 const validFields = ['firstName', 'lastName', 'emailAdress', 'password', 'isActive', 'street', 'city', 'phoneNumber', 'roles'];
@@ -10,7 +9,7 @@ const userService = {
         logger.info('create user', user.firstName, user.lastName);
     
         const requiredFields = ['firstName', 'lastName', 'emailAdress', 'password', 'isActive', 'street', 'city', 'phoneNumber', 'roles'];
-        const missingFields = requiredFields.filter(field => !user[field]);
+        const missingFields = requiredFields.filter(field => user[field] === undefined);
     
         if (missingFields.length > 0) {
             const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
@@ -168,7 +167,7 @@ const userService = {
                 return;
             }
 
-            connection.query('SELECT id, firstName, lastName FROM `user` WHERE id = ?', [userId], (error, results) => {
+            connection.query('SELECT * FROM `user` WHERE id = ?', [userId], (error, results) => {
                 connection.release();
                 if (error) {
                     logger.error(error);
@@ -177,7 +176,7 @@ const userService = {
                     logger.debug(results);
                     callback(null, {
                         message: `Found ${results.length} user.`,
-                        data: user
+                        data: results
                     });
                 }
             });
