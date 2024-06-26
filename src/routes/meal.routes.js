@@ -18,10 +18,10 @@ const notFound = (req, res, next) => {
 
 router.post('/', validateToken, mealController.create)
 router.put('/:mealId', validateToken, mealController.update)
+router.get('/', mealController.getAll)
 
 // TODO: Implement the following routes:
-router.get('/api/meal', validateToken, notFound)
-router.get('/api/meal/:mealId', validateToken, notFound)
+router.get('/api/meal/:mealId', notFound)
 router.delete('/api/meal/:mealId', validateToken, notFound)
 
 // Alle niet bestaande routes worden afgevangen

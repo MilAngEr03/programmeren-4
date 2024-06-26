@@ -1,5 +1,6 @@
 const logger = require('../util/logger');
 const database = require('../dao/mysql-db');
+const { get } = require('../..');
 
 let mealService = {
     create: (meal, userId, callback) => {
@@ -62,13 +63,61 @@ let mealService = {
         const requiredFields = ['isActive', 'isVega', 'isVegan', 'isToTakeHome', 'dateTime', 'maxAmountOfParticipants', 'price', 'imageUrl', 'name', 'description']; // Corrected 'maxAmountOfParticipants'
         const missingFields = requiredFields.filter(field => meal[field] === undefined && field !== 'cookId'); // Explicitly check for undefined
 
-
-        if (missingFields.length > 0) {
-            const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
+        if (meal.cookId === userId) {
+            if (missingFields.length > 0) {
+                const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
+                logger.error(errorMessage);
+                callback(new Error(errorMessage), null);
+                return;
+            }
+        
+            database.getConnection((err, connection) => {
+                if (err) {
+                    logger.error(err);
+                    callback(err, null);
+                    return;
+                }
+        
+                const query = 'UPDATE `meal` SET isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = ?, maxAmountOfParticipants = ?, price = ?, imageURL = ?, cookId = ?, name = ?, description = ?, allergenes = ? WHERE id = ?;'
+                const values = [
+                    meal.isActive,
+                    meal.isVega,
+                    meal.isVegan,
+                    meal.isToTakeHome,
+                    meal.dateTime,
+                    meal.maxAmountOfParticipants,
+                    meal.price,
+                    meal.imageUrl,
+                    meal.cookId,
+                    meal.name,
+                    meal.description,
+                    meal.allergenes,
+                    mealId
+                ];
+        
+                connection.query(query, values, (error, results) => {
+                    connection.release();
+                    if (error) {
+                        logger.error(error)
+                        callback(error, null)
+                    } else {
+                        logger.debug(results)
+                        callback(null, {
+                            message: `Updated meal with id ${mealId}.`,
+                            data: { meal }
+                        })
+                    }
+                })
+            })
+        } else {
+            const errorMessage = `You are not the owner of this meal.`;
             logger.error(errorMessage);
             callback(new Error(errorMessage), null);
-            return;
         }
+    },
+
+    getAll: (callback) => {
+        logger.info('Getting all meals.');
     
         database.getConnection((err, connection) => {
             if (err) {
@@ -77,24 +126,9 @@ let mealService = {
                 return;
             }
     
-            const query = 'UPDATE `meal` SET isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = ?, maxAmountOfParticipants = ?, price = ?, imageURL = ?, cookId = ?, name = ?, description = ?, allergenes = ? WHERE id = ?;'
-            const values = [
-                meal.isActive,
-                meal.isVega,
-                meal.isVegan,
-                meal.isToTakeHome,
-                meal.dateTime,
-                meal.maxAmountOfParticipants,
-                meal.price,
-                meal.imageUrl,
-                meal.cookId,
-                meal.name,
-                meal.description,
-                meal.allergenes,
-                mealId
-            ];
+            const query = 'SELECT * FROM `meal`;';
     
-            connection.query(query, values, (error, results) => {
+            connection.query(query, (error, results) => {
                 connection.release();
                 if (error) {
                     logger.error(error)
@@ -102,8 +136,8 @@ let mealService = {
                 } else {
                     logger.debug(results)
                     callback(null, {
-                        message: `Updated meal with id ${mealId}.`,
-                        data: { meal }
+                        message: `Found ${results.length} meals.`,
+                        data: results
                     })
                 }
             })

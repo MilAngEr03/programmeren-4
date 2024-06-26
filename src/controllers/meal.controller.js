@@ -5,7 +5,8 @@
 const mealService = require('../services/meal.service');
 const logger = require('../util/logger');
 const userService = require('../services/user.service');
-const { update } = require('./user.controller');
+const { update, getAll } = require('./user.controller');
+const { get } = require('../..');
 
 let mealController = {
     create: (req, res, next) => {
@@ -53,7 +54,27 @@ let mealController = {
                 });
             }
         });
-    }
+    },
+
+    getAll: (req, res, next) => {
+        logger.info('get all meals');
+        mealService.getAll((error, success) => {
+            if (error) {
+                return next({
+                    status: error.status,
+                    message: error.message,
+                    data: {}
+                });
+            }
+            if (success) {
+                res.status(200).json({
+                    status: 200,
+                    message: success.message,
+                    data: success.data
+                });
+            }
+        });
+    },
 };
 
 module.exports = mealController;
