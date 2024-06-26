@@ -109,7 +109,7 @@ let mealService = {
                 })
             })
         } else {
-            const errorMessage = `You are not the owner of this meal.`;
+            const errorMessage = `Je bent niet de eigenaar van deze meal.`;
             logger.error(errorMessage);
             callback(new Error(errorMessage), null);
         }
@@ -201,13 +201,13 @@ let mealService = {
                         } else {
                             logger.debug(results)
                             callback(null, {
-                                message: `Deleted meal with id ${mealId}.`,
+                                message: `Maaltijd met ID ${mealId} is verwijderd.`,
                                 data: {}
                             })
                         }
                     })
                 } else {
-                    const errorMessage = `You are not the owner of this meal.`;
+                    const errorMessage = `Je bent niet de eigenaar van deze meal.`;
                     logger.error(errorMessage);
                     callback(new Error(errorMessage), null);
                 }

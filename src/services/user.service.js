@@ -130,7 +130,7 @@ const userService = {
             if (invalidFields.length > 0) {
                 logger.warn('Invalid search criteria fields:', invalidFields);
                 return callback(null, {
-                    message: 'No users found due to invalid search criteria.',
+                    message: 'Geen gebruikers gevonden door gebruik van invalide zoekcriteria.',
                     data: []
                 });
             }
@@ -278,7 +278,7 @@ const userService = {
             }
         } else {
             const error = new Error('Unauthorized');
-            logger.error('Unauthorized: UserId does not match CreatorId', { userId, creatorId });
+            logger.error('Geweigerd: Dit is niet jouw account', { userId, creatorId });
             callback(error, null);
         }
     },
