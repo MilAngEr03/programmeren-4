@@ -20,9 +20,7 @@ router.post('/', validateToken, mealController.create)
 router.put('/:mealId', validateToken, mealController.update)
 router.get('/', mealController.getAll)
 router.get('/:mealId', mealController.getById)
-
-// TODO: Implement the following routes:
-router.delete('/api/meal/:mealId', validateToken, notFound)
+router.delete('/:mealId', validateToken, mealController.delete)
 
 // Alle niet bestaande routes worden afgevangen
 router.all('*', notFound);

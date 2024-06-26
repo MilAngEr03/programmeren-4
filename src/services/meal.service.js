@@ -172,6 +172,47 @@ let mealService = {
         })
     },
 
+    delete: (mealId, userId, callback) => {
+        logger.info(`Deleting meal with id ${mealId}.`);
+
+        database.getConnection((err, connection) => {
+            if (err) {
+                logger.error(err);
+                callback(err, null);
+                return;
+            }
+    
+            const query = 'SELECT cookId FROM `meal` WHERE id = ?;';
+            const values = [mealId];
+            connection.query(query, values, (error, results) => {
+                connection.release();
+                if (error) {
+                    logger.error(error)
+                    callback(error, null)
+                } else if (results[0].cookId === userId) {
+                    const query = 'DELETE FROM `meal` WHERE id = ? AND cookId = ?;';
+                    const values = [mealId, userId];
+            
+                    connection.query(query, values, (error, results) => {
+                        connection.release();
+                        if (error) {
+                            logger.error(error)
+                            callback(error, null)
+                        } else {
+                            logger.debug(results)
+                            callback(null, {
+                                message: `Deleted meal with id ${mealId}.`,
+                                data: {}
+                            })
+                        }
+                    })
+                } else {
+                    const errorMessage = `You are not the owner of this meal.`;
+                    logger.error(errorMessage);
+                    callback(new Error(errorMessage), null);
+                }
+        })})
+    },
 }
 
 module.exports = mealService;
