@@ -78,7 +78,7 @@ let mealService = {
                     return;
                 }
         
-                const query = 'UPDATE `meal` SET isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = ?, maxAmountOfParticipants = ?, price = ?, imageURL = ?, cookId = ?, name = ?, description = ?, allergenes = ? WHERE id = ?;'
+                const query = 'UPDATE `meal` SET isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = ?, maxAmountOfParticipants = ?, price = ?, imageURL = ?, name = ?, description = ?, allergenes = ? WHERE id = ?;'
                 const values = [
                     meal.isActive,
                     meal.isVega,
@@ -88,7 +88,6 @@ let mealService = {
                     meal.maxAmountOfParticipants,
                     meal.price,
                     meal.imageUrl,
-                    meal.cookId,
                     meal.name,
                     meal.description,
                     meal.allergenes,
@@ -142,7 +141,36 @@ let mealService = {
                 }
             })
         })
-    }
+    },
+
+    getById: (mealId, callback) => {
+        logger.info(`Getting meal with id ${mealId}.`);
+    
+        database.getConnection((err, connection) => {
+            if (err) {
+                logger.error(err);
+                callback(err, null);
+                return;
+            }
+    
+            const query = 'SELECT * FROM `meal` WHERE id = ?;';
+            const values = [mealId];
+    
+            connection.query(query, values, (error, results) => {
+                connection.release();
+                if (error) {
+                    logger.error(error)
+                    callback(error, null)
+                } else {
+                    logger.debug(results)
+                    callback(null, {
+                        message: `Found meal with id ${mealId}.`,
+                        data: results[0]
+                    })
+                }
+            })
+        })
+    },
 
 }
 
