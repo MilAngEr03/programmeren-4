@@ -59,7 +59,7 @@ const userService = {
                         logger.debug(results);
                         callback(null, {
                             message: `Created user with id ${results.insertId}.`,
-                            data: { user }
+                            data: { values }
                         });
                     }
                 });
@@ -177,7 +177,7 @@ const userService = {
                     logger.debug(results);
                     callback(null, {
                         message: `Found ${results.length} user.`,
-                        data: results
+                        data: user
                     });
                 }
             });
@@ -311,7 +311,7 @@ const userService = {
                         logger.debug(results);
                         callback(null, {
                             message: `Deleted ${results.affectedRows} user.`,
-                            data: { message: `Deleted user with userId ${userId}` }
+                            data: { message: `User met ID ${userId} is verwijderd` }
                         });
                     }
                 });
