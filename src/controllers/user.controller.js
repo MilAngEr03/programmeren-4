@@ -1,63 +1,181 @@
-const userService = require('../services/user.services');
-const logger = require('../utils/logger');
+const { get } = require('../..')
+const userService = require('../services/user.service')
+const logger = require('../util/logger')
 
-const controller = {
-  addUser: (req, res, next) => {
-    const user = req.body;
-    logger.info('Creating user', user.firstName, user.lastName);
-    userService.create(user, (err, data) => {
-      if (err) {
-        return next({ status: err.status || 500, message: err.message || 'Unknown error' });
-      }
-      res.status(201).json({ status: 201, message: 'User created', data });
-    });
-  },
+let userController = {
+    create: (req, res, next) => {
+        const user = req.body
+        logger.info('create user', user.firstName, user.lastName)
+        userService.create(user, (error, success) => {
+            if (error) {
+                return next({
+                    status: error.status,
+                    message: error.message,
+                    data: {}
+                })
+            }
+            if (success) {
+                res.status(200).json({
+                    status: success.status,
+                    message: success.message,
+                    data: success.data
+                })
+            }
+        })
+    },
 
-  getAllUsers: (req, res, next) => {
-    logger.info('Showing all users');
-    userService.getAll((err, data) => {
-      if (err) {
-        return next({ status: 500, message: err.message });
-      }
-      res.status(200).json({ status: 200, message: 'List of users', data });
-    });
-  },
+    getAll: (req, res, next) => {
+        const isActive = req.body.isActive;
+        const criteria = req.body.criteria || {};
+    
+        if (isActive !== undefined) {
+            logger.trace(`getAll users where isActive = ${isActive}`);
+            userService.getAllActive(isActive, (error, success) => {
+                if (error) {
+                    return next({
+                        status: error.status,
+                        message: error.message,
+                        data: {}
+                    });
+                }
+                if (success) {
+                    res.status(200).json({
+                        status: 200,
+                        message: success.message,
+                        data: success.data
+                    });
+                }
+            });
+        } else if (Object.keys(criteria).length > 0) {
+            logger.trace('getAll users with criteria', criteria);
+            userService.getByCriteria(criteria, (error, success) => {
+                if (error) {
+                    return next({
+                        status: error.status,
+                        message: error.message,
+                        data: {}
+                    });
+                }
+                if (success) {
+                    res.status(200).json({
+                        status: 200,
+                        message: success.message,
+                        data: success.data
+                    });
+                }
+            });
+        } else {
+            logger.trace('getAll');
+            userService.getAll((error, success) => {
+                if (error) {
+                    return next({
+                        status: error.status,
+                        message: error.message,
+                        data: {}
+                    });
+                }
+                if (success) {
+                    res.status(200).json({
+                        status: 200,
+                        message: success.message,
+                        data: success.data
+                    });
+                }
+            });
+        }
+    },
 
-  getUserById: (req, res, next) => {
-    const userId = parseInt(req.params.userId);
-    logger.info('Get user by id', userId);
-    userService.getById(userId, (err, user) => {
-      if (err) {
-        return next({ status: err.status || 500, message: err.message });
-      }
-      res.status(200).json({ status: 200, message: 'User found', user });
-    });
-  },
+    getById: (req, res, next) => {
+        const userId = req.params.userId
+        logger.trace('userController: getById', userId)
+        userService.getById(userId, (error, success) => {
+            if (error) {
+                return next({
+                    status: error.status,
+                    message: error.message,
+                    data: {}
+                })
+            }
+            if (success) {
+                res.status(200).json({
+                    status: success.status,
+                    message: success.message,
+                    data: success.data
+                })
+            }
+        })
+    },
 
-  editUserById: (req, res, next) => {
-    const userId = req.params.userId;
-    const updatedData = req.body;
-    logger.info('Updating user by ID:', userId);
-    userService.updateUserById(userId, updatedData, (err, updatedUser) => {
-      if (err) {
-        logger.error('Error updating user by ID:', err);
-        return next({ status: err.status || 404, message: err.message || `User with ID ${userId} not found` });
-      }
-      res.status(200).json({ status: 200, message: 'User updated', user: updatedUser });
-    });
-  },
+    getProfile: (req, res, next) => {
+        const userId = req.userId
+        logger.trace('getProfile for userId', userId)
+        userService.getProfile(userId, (error, success) => {
+            if (error) {
+                return next({
+                    status: error.status,
+                    message: error.message,
+                    data: {}
+                })
+            }
+            if (success) {
+                res.status(200).json({
+                    status: 200,
+                    message: success.message,
+                    data: success.data
+                })
+            }
+        })
+    },
 
-  deleteUserById: (req, res, next) => {
-    const userId = parseInt(req.params.userId);
-    userService.deleteUserById(userId, (err, deletedUser) => {
-      if (err) {
-        logger.error('Error deleting user:', err);
-        return next({ status: err.status || 404, message: err.message || `User with ID ${userId} not found` });
-      }
-      res.status(200).json({ status: 200, message: 'User deleted', deletedUser });
-    });
-  }
-};
+    update: (req, res, next) => {
+        const userId = req.params.userId;
+        const creatorId = req.userId;
+        const user = req.body; // Assuming the user data is coming from the request body
 
-module.exports = controller;
+        logger.trace('update user', userId);
+        logger.trace('creatorId', creatorId);
+        logger.trace('user', user)
 
+        userService.update(userId, creatorId, user, (error, success) => {
+            if (error) {
+                return next({
+                    status: 500, // You may want to set a proper error status based on the type of error
+                    message: error.message,
+                    data: {}
+                });
+            }
+            if (success) {
+                res.status(200).json({
+                    status: 200,
+                    message: success.message,
+                    data: success.data
+                });
+            }
+        });
+    },
+
+    delete: (req, res, next) => {
+        const userId = req.params.userId;
+        const creatorId = req.userId;
+        logger.trace(`delete user ${userId} if it matches ${creatorId}`);
+        userService.delete(userId, creatorId, (error, success) => {
+            if (error) {
+                return next({
+                    status: error.status,
+                    message: error.message,
+                    data: {}
+                });
+            }
+            if (success) {
+                res.status(200).json({
+                    status: 200,
+                    message: success.message,
+                    data: success.data
+                });
+            }
+        });
+    }
+    // Todo: Implement the delete method
+}
+
+module.exports = userController

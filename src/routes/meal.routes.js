@@ -1,7 +1,9 @@
 const express = require('express')
 const assert = require('assert')
+// const chai = require('chai')
+// chai.should()
 const router = express.Router()
-const userController = require('../controllers/user.controller')
+const mealController = require('../controllers/meal.controller')
 const logger = require('../util/logger')
 const { validateToken } = require('../routes/authentication.routes')
 
@@ -14,13 +16,11 @@ const notFound = (req, res, next) => {
     })
 }
 
-// Userroutes
-router.post('/', userController.create)
-router.get('/', validateToken, userController.getAll)
-router.get('/profile', validateToken, userController.getProfile)
-router.get('/:userId', validateToken, userController.getById)
-router.put('/:userId', validateToken, userController.update)
-router.delete('/:userId', validateToken, userController.delete)
+router.post('/', validateToken, mealController.create)
+router.put('/:mealId', validateToken, mealController.update)
+router.get('/', mealController.getAll)
+router.get('/:mealId', mealController.getById)
+router.delete('/:mealId', validateToken, mealController.delete)
 
 // Alle niet bestaande routes worden afgevangen
 router.all('*', notFound);
